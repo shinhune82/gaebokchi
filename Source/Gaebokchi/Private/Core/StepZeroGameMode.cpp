@@ -53,7 +53,8 @@ void AStepZeroGameMode::SpawnFloor()
 	{
 		if (UStaticMeshComponent* MeshComp = Floor->GetStaticMeshComponent())
 		{
-			MeshComp->SetMobility(EComponentMobility::Static);
+			// 런타임에 스폰되므로 라이트맵 빌드가 불가능함 — Movable로 둬서 빌드 없이 바로 보이게 한다.
+			MeshComp->SetMobility(EComponentMobility::Movable);
 			MeshComp->SetStaticMesh(FloorMesh);
 			MeshComp->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 		}
@@ -65,7 +66,11 @@ void AStepZeroGameMode::SpawnFloor()
 void AStepZeroGameMode::SpawnLight()
 {
 	FActorSpawnParameters Params;
-	GetWorld()->SpawnActor<ADirectionalLight>(FVector(0.f, 0.f, 500.f), FRotator(-45.f, -45.f, 0.f), Params);
+	if (ADirectionalLight* Light = GetWorld()->SpawnActor<ADirectionalLight>(FVector(0.f, 0.f, 500.f), FRotator(-45.f, -45.f, 0.f), Params))
+	{
+		// Movable이어야 라이트맵 빌드 없이 런타임에 바로 빛을 낸다.
+		Light->GetLightComponent()->SetMobility(EComponentMobility::Movable);
+	}
 }
 
 void AStepZeroGameMode::SpawnNavMesh()
