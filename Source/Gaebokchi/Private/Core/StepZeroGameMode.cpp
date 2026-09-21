@@ -8,6 +8,7 @@
 #include "Engine/StaticMeshActor.h"
 #include "Engine/DirectionalLight.h"
 #include "Components/StaticMeshComponent.h"
+#include "Components/LightComponent.h"
 #include "NavMesh/NavMeshBoundsVolume.h"
 #include "NavigationSystem.h"
 #include "UObject/ConstructorHelpers.h"
