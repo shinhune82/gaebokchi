@@ -1,0 +1,6 @@
+Name,StartHour,EndHour,LocationTag,Action
+Row0,6.0,8.0,Loc.TrainingGround,Train
+Row1,8.0,12.0,Loc.Market,Idle
+Row2,12.0,13.0,Loc.Home,Eat
+Row3,13.0,22.0,Loc.TrainingGround,Train
+Row4,22.0,6.0,Loc.Home,Sleep
