@@ -27,6 +27,7 @@ Source/
     Public/World/ScheduleLocation.h         — AScheduleLocation (장소 마커)
     Public/NPC/NPCAIController.h            — ANPCAIController (이동 실행)
     Public/NPC/NPCCharacter.h               — ANPCCharacter (ScheduleComponent 부착)
+    Public/Core/StepZeroGameMode.h          — AStepZeroGameMode (테스트 씬 자동 스폰)
     Private/...                              — 각 헤더의 구현
 Data/
   Schedule_TestNPC.csv                       — 스케줄 데이터 원본 (여길 고치면 DataTable에 반영)
@@ -51,20 +52,28 @@ Data/
 
 이후 CSV 원본을 고치고 DataTable 에셋을 우클릭 → `리임포트(Reimport)` 하면 데이터가 갱신된다. **이게 Step 0 성립 조건 테스트 방법이다.**
 
-## 4. 테스트 레벨 만들기
-`Content/Maps/README.md` 참고, 요약하면:
-1. `Content > Maps`에 새 레벨 생성, 이름 `L_Step0_TestVillage`
-2. 액터 배치 패널(`+ 추가` 또는 상단 `액터 배치`)에서 검색해서 배치 (전부 C++ 클래스라 블루프린트 없이 바로 검색됨):
-   - `WorldClock` 1개
-   - `ScheduleLocation` 3개 — 각각 선택 후 디테일 패널에서 `LocationTag`를 `Loc.Home`, `Loc.TrainingGround`, `Loc.Market`으로 지정하고, 서로 떨어진 위치로 이동
-   - `NPCCharacter` 1개 — 선택 후 디테일 패널에서 `Schedule Component > Schedule Table`에 `DT_Schedule_TestNPC` 연결
-3. 저장 (Ctrl+S)
+## 4. 테스트 레벨 — 수동 배치 불필요
+`AStepZeroGameMode`(`Source/Gaebokchi/Public/Core/StepZeroGameMode.h`)가 프로젝트 전역
+기본 GameMode로 지정되어 있다(`Config/DefaultEngine.ini`의 `GlobalDefaultGameMode`).
+**어떤 레벨이든 Play를 누르는 순간** 이 GameMode의 `BeginPlay()`가 자동으로:
+- 바닥(큐브 슬래브), 방향광, NavMesh Bounds Volume(+ 런타임 내비메시 빌드)
+- `WorldClock` 1개
+- `ScheduleLocation` 3개 (`Loc.Home`, `Loc.TrainingGround`, `Loc.Market`, 서로 떨어진 위치)
+- `NPCCharacter` 1개, `ScheduleComponent`에 `/Game/Data/Tables/Schedule_TestNPC` DataTable 자동 연결
+
+을 스폰한다. `Content > Maps`에 빈 레벨(`L_Step0_TestVillage`)을 하나 만들어서 저장만 해두면 된다
+(아무 액터도 직접 놓을 필요 없음). 이전에 수동으로 놓은 Plane 등이 있다면 지워도 되고 그냥 둬도
+무방하다(자동 스폰된 바닥과 겹칠 수 있으니 지우는 걸 권장).
 
 ## 5. 테스트
-1. `HoursPerRealSecond`를 크게 하고 싶으면 배치한 `WorldClock` 액터를 선택 → 디테일 패널에서 값 조정 (기본값 0.2 = 게임 5시간당 실제 1초)
-2. 플레이 버튼(PIE) 실행
-3. NPC가 TrainingGround → Market → Home → TrainingGround → Home 순으로 이동하는지 관찰. `출력 로그(Output Log)`에 `NPCAIController`가 찍는 로그도 확인 가능.
-4. **핵심 테스트**: PIE 멈추고 `Data/Schedule_TestNPC.csv`에서 아무 행이나 `LocationTag`나 시간을 바꾼 뒤, `DT_Schedule_TestNPC`를 리임포트(코드 재컴파일 불필요) → 다시 PIE 실행 → NPC가 바뀐 데이터대로 움직이면 Step 0 통과.
+1. 레벨을 열고 플레이 버튼(PIE) 실행
+2. `출력 로그(Output Log)`에서 `StepZeroGameMode`나 `NPCAIController` 관련 로그, 경고가 있는지 확인 (특히 "DataTable을 찾지 못함" 경고가 뜨면 3절의 임포트 경로/이름을 다시 확인)
+3. NPC가 TrainingGround → Market → Home → TrainingGround → Home 순으로 이동하는지 관찰
+4. **핵심 테스트**: PIE 멈추고 `Data/Schedule_TestNPC.csv`에서 아무 행이나 `LocationTag`나 시간을 바꾼 뒤, `Schedule_TestNPC` DataTable을 리임포트(코드 재컴파일 불필요) → 다시 PIE 실행 → NPC가 바뀐 데이터대로 움직이면 Step 0 통과.
+
+기본 `HoursPerRealSecond`는 0.2(게임 5시간당 실제 1초)로 하루가 몇 분 안에 다 돌아간다. 더 빠르게
+보고 싶으면 `Source/Gaebokchi/Public/Schedule/WorldClock.h`의 기본값을 바꾸고 재컴파일(에디터에서
+Ctrl+Alt+F11 라이브 코딩 또는 재시작)하면 된다.
 
 ## 6. Step 0 완료 후
 Step 1(다중 NPC 동시 실행)로 넘어가려면 `NPCCharacter`를 레벨에 여러 개 배치하고, 각자 다른 DataTable(CSV에서 새로 만들어 임포트)을 물려서 여러 NPC가 같은 장소(Market 등)에 겹칠 때 자연스럽게 공존하는지 확인한다. `docs/ROADMAP.md` 참고.
