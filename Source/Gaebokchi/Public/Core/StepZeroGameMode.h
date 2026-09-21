@@ -35,4 +35,5 @@ private:
 	void SpawnWorldClock();
 	void SpawnLocations();
 	void SpawnTestNPC();
+	void PositionPlayerCamera();
 };

@@ -12,6 +12,8 @@
 #include "NavMesh/NavMeshBoundsVolume.h"
 #include "NavigationSystem.h"
 #include "UObject/ConstructorHelpers.h"
+#include "Kismet/GameplayStatics.h"
+#include "GameFramework/Pawn.h"
 
 AStepZeroGameMode::AStepZeroGameMode()
 {
@@ -38,6 +40,7 @@ void AStepZeroGameMode::BeginPlay()
 	SpawnWorldClock();
 	SpawnLocations();
 	SpawnTestNPC();
+	PositionPlayerCamera();
 }
 
 void AStepZeroGameMode::SpawnFloor()
@@ -49,7 +52,9 @@ void AStepZeroGameMode::SpawnFloor()
 	}
 
 	FActorSpawnParameters Params;
-	AStaticMeshActor* Floor = GetWorld()->SpawnActor<AStaticMeshActor>(FVector::ZeroVector, FRotator::ZeroRotator, Params);
+	// 큐브(한 변 100, Z스케일 0.5 → 반두께 25) 윗면이 정확히 Z=0에 오도록 중심을 -25만큼 내린다.
+	// 원점(0,0,0)에서 스폰되는 DefaultPawn이 바닥 속에 파묻히는 걸 막기 위함.
+	AStaticMeshActor* Floor = GetWorld()->SpawnActor<AStaticMeshActor>(FVector(0.f, 0.f, -25.f), FRotator::ZeroRotator, Params);
 	if (Floor)
 	{
 		if (UStaticMeshComponent* MeshComp = Floor->GetStaticMeshComponent())
@@ -131,5 +136,15 @@ void AStepZeroGameMode::SpawnTestNPC()
 		{
 			UE_LOG(LogTemp, Warning, TEXT("StepZeroGameMode: DataTable(/Game/Data/Tables/Schedule_TestNPC)를 찾지 못함 — 임포트했는지 확인"));
 		}
+	}
+}
+
+void AStepZeroGameMode::PositionPlayerCamera()
+{
+	// PlayerStart가 없어 DefaultPawn이 원점에 스폰되므로, 씬 전체가 보이는
+	// 위치/각도로 직접 옮겨준다.
+	if (APawn* PlayerPawn = UGameplayStatics::GetPlayerPawn(this, 0))
+	{
+		PlayerPawn->SetActorLocationAndRotation(FVector(-1200.f, -1200.f, 900.f), FRotator(-30.f, 45.f, 0.f));
 	}
 }
